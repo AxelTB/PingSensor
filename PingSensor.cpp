@@ -1,33 +1,52 @@
 #include "PingSensor.h"
-#include "Arduino.h"
+#include "atomic"
 /** @brief PingSensor()
   *
   * Default constructor
   */
 PingSensor::PingSensor()
 {
-    pingSingleton=this; ///Only one instance allowed
+    pingSingleton=this; //Only one instance allowed
+    state=PS_RESET; //Reset state
 }
-/** @brief PingSensor
+/** @brief begin
   *
-  * @todo: document this function
+  * Init Ping sensor
+  * @Param: _trigPin: trigger pin
+  *         _echoPin: echo pin
+  *         [_timeoutus: pulse length timeout (microseconds)] (default:38400 us)
+  *         [_trigPulseDuration: trigger positive edge duration] (default: 10us)
   */
- PingSensor::PingSensor(uint8_t _trigPin,uint8_t _echoPin,uint16_t _timeoutus = 38400)
+void PingSensor::begin(uint8_t _trigPin,uint8_t _echoPin,uint16_t _timeoutus = 38400,uint8_t _trigPulseDuration=10)
 {
-    //Save parameters
+//Save parameters
     this->trigPin=_trigPin;
     this->echoPin=_echoPin;
     this->timeout=_timeoutus;
+    this->trigPulseDuration=_trigPulseDuration;
 
     //Init pin
     pinMode(trigPin,OUTPUT); //Pin di trigger
     pinMode(echoPin,INPUT); //Pin di echo
-    attachInterrupt(echoPin,&PingSensor::ISREcho)
+    attachInterrupt(echoPin,&PingSensor::ISREcho,CHANGE); //Set interrupt on echo pin at evry front
 }
+
+/** @brief available
+  *
+  * @todo: document this function
+  */
+uint8_t PingSensor::available()
+{
+
+}
+
+
+
 
 /** @brief getRoundTime
   *
-  * @todo: document this function
+  * Gets the time of wave travel (Back and forth). If a new value is available evaluate it, return old value otherwise.
+  * You need to use the function available to check if new data is available
   */
 uint16_t PingSensor::getRoundTime()
 {
@@ -45,32 +64,27 @@ uint16_t PingSensor::getDistance()
 
 /** @brief trigger
   *
-  * @todo: document this function
-  */
+  * Trigger ping sensor measurement. It takes at least _trigPulseDuration microseconds to be executed. (Default 10us)
+*/
 void PingSensor::trigger()
 {
+    //TODO: use
+    //Lock all function to easily avoid echo error
+    while(stateLock); //Wait for lock
+    stateLock=true; //LOCK
 
+    //Send a positive front to the ping sensor
+    digitalWrite( trigPin, HIGH );
+    delayMicroseconds( 10 );
+    digitalWrite( trigPin, LOW );
+
+    //Enable interrupt evaluation
+    this->state=PS_TRIGGERED;
+
+    stateLock=false; //FREE
 }
 
 
-
-/** @brief PingSensor
-  *
-  * @todo: document this function
-  */
- PingSensor::PingSensor(uint8_t,uint8_t)
-{
-
-}
-
-/** @brief PingSensor
-  *
-  * @todo: document this function
-  */
- PingSensor::PingSensor()
-{
-
-}
 
 /** @brief ISREcho
   *

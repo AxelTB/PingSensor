@@ -1,21 +1,28 @@
 #include "PingSensor.h"
-
+#include "Arduino.h"
 /** @brief PingSensor()
   *
   * Default constructor
   */
 PingSensor::PingSensor()
 {
-    //ctor
+    pingSingleton=this; ///Only one instance allowed
 }
 /** @brief PingSensor
   *
   * @todo: document this function
   */
- PingSensor::PingSensor(uint8_t _trigPin,uint8_t _echoPin,uint16_t _timeout = 38400)
+ PingSensor::PingSensor(uint8_t _trigPin,uint8_t _echoPin,uint16_t _timeoutus = 38400)
 {
+    //Save parameters
     this->trigPin=_trigPin;
     this->echoPin=_echoPin;
+    this->timeout=_timeoutus;
+
+    //Init pin
+    pinMode(trigPin,OUTPUT); //Pin di trigger
+    pinMode(echoPin,INPUT); //Pin di echo
+    attachInterrupt(echoPin,&PingSensor::ISREcho)
 }
 
 /** @brief getRoundTime
@@ -61,6 +68,15 @@ void PingSensor::trigger()
   * @todo: document this function
   */
  PingSensor::PingSensor()
+{
+
+}
+
+/** @brief ISREcho
+  *
+  * @todo: document this function
+  */
+void PingSensor::ISREcho(void)
 {
 
 }

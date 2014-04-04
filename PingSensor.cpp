@@ -56,9 +56,9 @@ void PingSensor::begin(uint8_t _trigPin,uint8_t _echoPin)
 }
 //-------------------------------------------------------------
 
-/** @brief available
-  *
-  * Returns 1 if a new measurement is available, 0 otherwise
+/** @brief Check for data availability
+  * @return 1 if a new measurement is available, 0 otherwise
+  * @see waitAvailable()
   */
 int8_t PingSensor::available()
 {
@@ -70,12 +70,13 @@ int8_t PingSensor::available()
 
 }
 
-/** @brief waitAvailable
-  *
+/** @brief Wait for available data.
   * Locking function. Returns whenever new data is available (Or after given waitTimeout).
-  *@param: waitTimeout Maximum function wait time. (Default 2*_timeoutus = 76800)
-  *@return: 0 if new data available
-            1 if waitTimeout occurred
+  * @param waitTimeout Maximum function wait time. (Default 2*_timeoutus = 76800)
+  * @return: 0 if new data available
+  *          1 if waitTimeout occurred
+  * @see available()
+  * @see waitAvailable()
   *
   */
 int8_t PingSensor::waitAvailable(uint16_t waitTimeout)
@@ -100,7 +101,9 @@ int8_t PingSensor::waitAvailable()
 /** @brief getRoundTime
   *
   * Gets the time of wave travel (Back and forth) in microseconds. If a new value is available evaluate it, return old value otherwise.
-  * You need to use the function available to check if new data is available
+  * You need to use the function available to check if new data is available.
+  * @return Time
+  * @see getDistance()
   */
 uint16_t PingSensor::getRoundTimeMicroseconds()
 {

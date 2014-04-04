@@ -33,10 +33,10 @@ protected:
     void parseTime();
     uint16_t lastRoundTime;
 
-    uint16_t distance,time;     //Measured data Variables
-    uint8_t trigPin, echoPin;   //Pin variables
-    uint8_t trigPulseDuration;  //Trigger pulse duration
-    uint16_t timeout;           //Read timeout
+    uint16_t distance,time;     ///<Measured data Variables
+    uint8_t trigPin, echoPin;   ///<Pin variables
+    uint8_t trigPulseDuration;  ///<Trigger pulse duration
+    uint16_t timeout;           ///<Read timeout
 private:
 };
 

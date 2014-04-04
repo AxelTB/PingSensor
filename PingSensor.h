@@ -5,17 +5,22 @@
 class PingSensor
 {
 public:
+	//static PingSensor *pingPointer;
+	static void ISREcho(void);
+
     PingSensor();
     ~PingSensor(); ///Default destructor
 
-    void begin(uint8_t,uint8_t,uint16_t,uint8_t);  ///Initialize pingsensor
+    ///Initialize pingsensor
+    void begin(uint8_t _trigPin,uint8_t _echoPin);
+    void begin(uint8_t _trigPin,uint8_t _echoPin,uint16_t _timeoutus);
+    void begin(uint8_t _trigPin,uint8_t _echoPin,uint16_t _timeoutus,uint8_t _trigPulseDuration);
     void trigger();
     uint16_t getDistance();
     uint16_t getRoundTimeMicroseconds();
     uint8_t available();
 
-    static PingSensor *pingSingleton;
-    static void ISREcho(void);
+
 
 protected:
 
@@ -29,5 +34,4 @@ protected:
 private:
 };
 
-PingSensor Ping;
 #endif // PINGSENSOR_H

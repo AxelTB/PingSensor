@@ -1,8 +1,8 @@
 #include "PingSensor.h"
-#include "atomic"
+#define _trigPulseDuration 10
 //Interrupt variables
 volatile bool interrupt_enable=false,echo_state=false;
-volatile uint16_t wave_time_start=0;
+volatile uint16_t wave_time=0;
 
 /** @brief PingSensor()
   *
@@ -10,8 +10,12 @@ volatile uint16_t wave_time_start=0;
   */
 PingSensor::PingSensor()
 {
-    pingSingleton=this; //Only one instance allowed
-    state=PS_RESET; //Reset state
+   // PingSensor::pingPointer=this; //Only one instance allowed
+    interrupt_enable=false; echo_state=false; //Reset state
+}
+PingSensor::~PingSensor()
+{
+	detachInterrupt(echoPin);
 }
 
 /** @brief begin
@@ -22,12 +26,11 @@ PingSensor::PingSensor()
   *         [_timeoutus: pulse length timeout (microseconds)] (default:38400 us)
   *         [_trigPulseDuration: trigger positive edge duration] (default: 10us)
   */
-void PingSensor::begin(uint8_t _trigPin,uint8_t _echoPin,uint16_t _timeoutus = 38400,uint8_t _trigPulseDuration=10)
+void PingSensor::begin(uint8_t _trigPin,uint8_t _echoPin)
 {
     //Save parameters
     this->trigPin=_trigPin;
     this->echoPin=_echoPin;
-    this->timeout=_timeoutus;
     this->trigPulseDuration=_trigPulseDuration;
 
     //Init pin
@@ -35,6 +38,8 @@ void PingSensor::begin(uint8_t _trigPin,uint8_t _echoPin,uint16_t _timeoutus = 3
     pinMode(echoPin,INPUT); //Pin di echo
     attachInterrupt(echoPin,&PingSensor::ISREcho,CHANGE); //Set interrupt on echo pin at evry front
 }
+
+
 
 /** @brief available
   *

@@ -1,5 +1,9 @@
 #include "PingSensor.h"
 #include "atomic"
+//Interrupt variables
+volatile bool interrupt_enable=false,echo_state=false;
+volatile uint16_t wave_time_start=0;
+
 /** @brief PingSensor()
   *
   * Default constructor
@@ -9,6 +13,7 @@ PingSensor::PingSensor()
     pingSingleton=this; //Only one instance allowed
     state=PS_RESET; //Reset state
 }
+
 /** @brief begin
   *
   * Init Ping sensor
@@ -19,7 +24,7 @@ PingSensor::PingSensor()
   */
 void PingSensor::begin(uint8_t _trigPin,uint8_t _echoPin,uint16_t _timeoutus = 38400,uint8_t _trigPulseDuration=10)
 {
-//Save parameters
+    //Save parameters
     this->trigPin=_trigPin;
     this->echoPin=_echoPin;
     this->timeout=_timeoutus;
@@ -33,10 +38,15 @@ void PingSensor::begin(uint8_t _trigPin,uint8_t _echoPin,uint16_t _timeoutus = 3
 
 /** @brief available
   *
-  * @todo: document this function
+  * Returns 1 if a new measurement is available, 0 otherwise
   */
 uint8_t PingSensor::available()
 {
+
+    if(!interrupt_enable && echo_state) //If new value available
+        return 1;
+
+    return 0;
 
 }
 
@@ -45,21 +55,23 @@ uint8_t PingSensor::available()
 
 /** @brief getRoundTime
   *
-  * Gets the time of wave travel (Back and forth). If a new value is available evaluate it, return old value otherwise.
+  * Gets the time of wave travel (Back and forth) in microseconds. If a new value is available evaluate it, return old value otherwise.
   * You need to use the function available to check if new data is available
   */
-uint16_t PingSensor::getRoundTime()
+uint16_t PingSensor::getRoundTimeMicroseconds()
 {
-
+    if(available())
+        parseTime();
+    return lastRoundTime;
 }
 
 /** @brief getDistance
   *
-  * @todo: document this function
+  * Return the distance in mm.
   */
 uint16_t PingSensor::getDistance()
 {
-
+    return 0.3321f*getRoundTimeMicroseconds()/2;
 }
 
 /** @brief trigger
@@ -68,30 +80,66 @@ uint16_t PingSensor::getDistance()
 */
 void PingSensor::trigger()
 {
-    //TODO: use
-    //Lock all function to easily avoid echo error
-    while(stateLock); //Wait for lock
-    stateLock=true; //LOCK
+    if(interrupt_enable) //If last measurement did not complete
+    {
+        //Assuming timeout reached
+        interrupt_enable=false; //Disable interrupt
+        echo_state=false; //Reset state
+    }
+    else
+        if(available())
+            parseTime(); //Save old measurement
+
 
     //Send a positive front to the ping sensor
     digitalWrite( trigPin, HIGH );
-    delayMicroseconds( 10 );
+    delayMicroseconds( trigPulseDuration );
     digitalWrite( trigPin, LOW );
 
     //Enable interrupt evaluation
-    this->state=PS_TRIGGERED;
+    interrupt_enable=true;
+}
+/** @brief parseTime
+  *
+  * Parse time from interrupt variables. Check availability first!!!
+  */
+void PingSensor::parseTime()
+{
+    lastRoundTime=wave_time; //Save travel time
+    echo_state=false; //Reset echo state
 
-    stateLock=false; //FREE
 }
 
 
+
+//ISR====================================================================
 
 /** @brief ISREcho
   *
-  * @todo: document this function
+  * Function called every front on echo pin
   */
 void PingSensor::ISREcho(void)
 {
-
+    if(interrupt_enable) //If interrupt evaluation enabled
+    {
+        if(echo_state==false) //Rising edge
+        {
+            wave_time=micros(); //Save current time
+            echo_state=true; //Signal HIGH level
+        }
+        else
+        {
+            wave_time=micros()-wave_time; //Save HIGH level dt
+            interrupt_enable=false; //Disable interrupt
+        }
+    }
 }
 
+/***
+state
+interrupt_enable    echo_state  state
+0                   0           RESET
+1                   0           Waiting Rising Edge
+1                   1           Waiting Falling Edge (wave_time contains start time)
+0                   1           New value available (wave_time contains dt)
+**/

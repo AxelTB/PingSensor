@@ -1,4 +1,4 @@
 PingSensor
 ==========
 
-Ping Sensor library for Energia/Arduino
+Interrupt based Ping sensor

@@ -1,6 +1,6 @@
 PingSensor
 ==========
 
-Interrupt based Ping sensor
+Interrupt based Ping sensor library.
 
-For documentation just run doxygen
+For documentation just run doxygen,
